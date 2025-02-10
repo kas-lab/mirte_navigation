@@ -1,5 +1,8 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
@@ -7,18 +10,25 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     # Get the package share directory
-    package_share_dir = FindPackageShare("mirte_navigation").find("mirte_navigation")
+    pkg_mirte_navigation = get_package_share_directory('mirte_navigation')
 
     # Define relative paths for the map and params file
-    map_file = PathJoinSubstitution([package_share_dir, "maps", "map.yaml"])
-    params_file = PathJoinSubstitution([package_share_dir, "params", "mirte_nav2_params.yaml"])
+    map_file = os.path.join(
+        pkg_mirte_navigation,
+        'maps',
+        'map.yaml')
+    
+    params_file = os.path.join(
+        pkg_mirte_navigation,
+        'params',
+        'mirte_nav2_params.yaml')
 
     # Localization launch
     localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
         ])),
-        launch_arguments={"map": map_file}.items()
+        launch_arguments={'map': map_file}.items()
     )
 
     # Navigation launch
