@@ -26,7 +26,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'set_initial_pose = mirte_navigation.set_initial_pose: main',
         ],
+        
     },
 )
 

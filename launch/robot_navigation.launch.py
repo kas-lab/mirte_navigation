@@ -2,8 +2,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 
+from launch_ros.actions import Node
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare  
@@ -50,8 +51,20 @@ def generate_launch_description():
         output="screen"
     )
 
+    initial_pose_node = TimerAction(
+        period=1.0,  # Delay in seconds before starting the initial pose node
+        actions=[
+            Node(
+                package='mirte_navigation',
+                executable='set_initial_pose',
+                name='set_initial_pose',
+                output='screen'
+            )
+        ]
+    )
     return LaunchDescription([
         localization_launch,
+        initial_pose_node,
         navigation_launch,
         rviz_command
     ])
