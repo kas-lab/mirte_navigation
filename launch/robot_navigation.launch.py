@@ -9,7 +9,18 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare  
 
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+
 def generate_launch_description():
+    use_sim_time = LaunchConfiguration('use_sim_time')
+
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='False',
+        description='use_sim_time'
+    )
+  
     # Get the package share directory
     pkg_mirte_navigation = get_package_share_directory('mirte_navigation')
 
@@ -29,7 +40,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
         ])),
-        launch_arguments={'map': map_file}.items()
+        launch_arguments={'map': map_file, 'use_sim_time': use_sim_time}.items()
     )
 
     # Navigation launch
@@ -39,16 +50,20 @@ def generate_launch_description():
         ])),
         launch_arguments={
             "map": map_file,
-            "params_file": params_file
+            "params_file": params_file,
+            'use_sim_time': use_sim_time,
         }.items()
     )
 
-    # RViz execution
-    rviz_command = ExecuteProcess(
-        cmd=["rviz2", "-d", PathJoinSubstitution([
+    rviz_file = PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "rviz", "nav2_default_view.rviz"
-        ])],
-        output="screen"
+        ])
+    start_rviz_cmd = Node(
+        package="rviz2",
+        executable="rviz2",
+        arguments=["-d", rviz_file, "--ros-args", "--log-level", "WARN"],
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
     )
 
     initial_pose_node = TimerAction(
@@ -63,8 +78,9 @@ def generate_launch_description():
         ]
     )
     return LaunchDescription([
+        use_sim_time_arg,
         localization_launch,
         initial_pose_node,
         navigation_launch,
-        rviz_command
+        start_rviz_cmd
     ])
