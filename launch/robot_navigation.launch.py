@@ -50,7 +50,33 @@ def generate_launch_description():
         ])],
         output="screen"
     )
-
+    relay_topic_cmd = Node(
+        package = "topic_tools",
+        executable = "relay",
+        arguments=["/cmd_vel", "/mirte_base_controller/cmd_vel"],
+        output="screen",
+    )
+    relay_topic_odom = Node(
+        package = "topic_tools",
+        executable = "relay",
+        arguments=["/mirte_base_controller/odom", "/odom"],
+        output="screen",
+    )
+    # tf_base_footprint = 
+    tf_base_frame = TimerAction(
+        period=1.0,  # Delay in seconds before starting the initial pose node
+        actions=[Node(
+        package = "tf2_ros",
+        executable = "static_transform_publisher",
+        arguments=["0", "0", "0", "0", "0", "0", "base_link", "base_frame"],
+        output="screen",
+    ),Node(
+        package = "tf2_ros",
+        executable = "static_transform_publisher",
+        arguments=["0", "0", "0", "0", "0", "0",  "base_link", "base_footprint"],
+        output="screen",
+    ),
+    ])
     initial_pose_node = TimerAction(
         period=1.0,  # Delay in seconds before starting the initial pose node
         actions=[
@@ -66,5 +92,8 @@ def generate_launch_description():
         localization_launch,
         initial_pose_node,
         navigation_launch,
-        rviz_command
+        rviz_command,
+        relay_topic_cmd,
+        relay_topic_odom,
+        tf_base_frame,
     ])
