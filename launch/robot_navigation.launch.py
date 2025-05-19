@@ -8,9 +8,11 @@ from launch.actions import IncludeLaunchDescription, ExecuteProcess, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare  
-
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
+from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -20,6 +22,13 @@ def generate_launch_description():
         default_value='False',
         description='use_sim_time'
     )
+
+    use_map_arg = DeclareLaunchArgument(
+        "use_map",
+        default_value="True",
+        description="Run using a premade map, no SLAM (True/False)",
+    )
+    
   
     # Get the package share directory
     pkg_mirte_navigation = get_package_share_directory('mirte_navigation')
@@ -28,7 +37,7 @@ def generate_launch_description():
     map_file = os.path.join(
         pkg_mirte_navigation,
         'maps',
-        'map.yaml')
+        'robocup_map.yaml')
     
     params_file = os.path.join(
         pkg_mirte_navigation,
@@ -55,6 +64,26 @@ def generate_launch_description():
         }.items()
     )
 
+    slam_tb_path = get_package_share_directory("slam_toolbox")
+    slam_tb_launch_path = os.path.join(slam_tb_path, "launch", "online_async_launch.py")
+
+    nav2_with_slam = GroupAction(
+        actions=[
+            navigation_launch,
+            IncludeLaunchDescription(AnyLaunchDescriptionSource(slam_tb_launch_path)),
+        ],
+        condition=LaunchConfigurationEquals("use_map", "False"),
+    )
+
+
+    nav_and_localization = GroupAction(
+        actions=[
+            localization_launch,
+            navigation_launch
+        ],
+        condition=LaunchConfigurationEquals("use_map", "True"),
+    )
+
     rviz_file = PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "rviz", "nav2_default_view.rviz"
         ])
@@ -78,9 +107,10 @@ def generate_launch_description():
         ]
     )
     return LaunchDescription([
+        use_map_arg,
         use_sim_time_arg,
-        localization_launch,
         initial_pose_node,
-        navigation_launch,
+        nav_and_localization,
+        nav2_with_slam,
         start_rviz_cmd
     ])
