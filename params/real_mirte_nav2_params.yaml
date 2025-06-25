@@ -39,8 +39,8 @@ amcl:
     z_rand: 0.5
     z_short: 0.05
     scan_topic: scan
-    set_initial_pose: True
-    initial_pose: {x: 0.0, y: 0.0, z: 0.0, yaw: 0.0}
+    # set_initial_pose: True
+    # initial_pose: {x: 0.0, y: 0.0, z: 0.0, yaw: 0.0}
 
 bt_navigator:
   ros__parameters:
@@ -49,7 +49,7 @@ bt_navigator:
     odom_topic: odom
     bt_loop_duration: 10
     default_server_timeout: 20
-    # default_nav_to_pose_bt_xml: "<tree_path>"
+    default_nav_to_pose_bt_xml: "<tree_path>"
     wait_for_service_timeout: 1000
     action_server_result_timeout: 900.0
     navigators: ["navigate_to_pose", "navigate_through_poses"]
@@ -122,6 +122,9 @@ controller_server:
         time_step: 3
       AckermannConstraints:
         min_turning_r: 0.2
+      # critics: [
+      #   "ConstraintCritic", "CostCritic", "GoalCritic",
+      #   "GoalAngleCritic"]
       critics: [
         "ConstraintCritic", "CostCritic", "GoalCritic",
         "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
@@ -209,7 +212,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 0.5
-        inflation_radius: 0.20
+        inflation_radius: 0.15
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -315,8 +318,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.20
+        cost_scaling_factor: 1.0
+        inflation_radius: 0.15
       always_send_full_costmap: True
 
 map_server:
