@@ -9,13 +9,17 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare  
 from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.substitutions import IfElseSubstitution 
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
+    use_map = LaunchConfiguration('use_map')
+    real_robot = LaunchConfiguration('real_robot')
 
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
@@ -24,12 +28,17 @@ def generate_launch_description():
     )
 
     use_map_arg = DeclareLaunchArgument(
-        "use_map",
-        default_value="True",
-        description="Run using a premade map, no SLAM (True/False)",
+        'use_map',
+        default_value='True',
+        description='Run using a premade map, no SLAM (True/False)',
+    )
+
+    real_robot_arg = DeclareLaunchArgument(
+        'real_robot',
+        default_value='True',
+        description='Wether the real robot is being used (True/False)',
     )
     
-  
     # Get the package share directory
     pkg_mirte_navigation = get_package_share_directory('mirte_navigation')
 
@@ -39,10 +48,23 @@ def generate_launch_description():
         'maps',
         'robocup_map.yaml')
     
-    params_file = os.path.join(
+    simulated_navigation_params_file = os.path.join(
         pkg_mirte_navigation,
         'params',
         'mirte_nav2_params.yaml')
+    
+    real_navigation_params_file = os.path.join(
+        pkg_mirte_navigation,
+        'params',
+        'real_mirte_nav2_params.yaml')
+
+    navigation_params_file = IfElseSubstitution(
+        condition=PythonExpression([
+            real_robot
+        ]),
+        if_value=real_navigation_params_file,
+        else_value=simulated_navigation_params_file
+    )
 
     slam_params_file = os.path.join(
         pkg_mirte_navigation,
@@ -64,7 +86,7 @@ def generate_launch_description():
         ])),
         launch_arguments={
             "map": map_file,
-            "params_file": params_file,
+            "params_file": navigation_params_file,
             'use_sim_time': use_sim_time,
         }.items()
     )
@@ -85,7 +107,6 @@ def generate_launch_description():
         ],
         condition=LaunchConfigurationEquals("use_map", "False"),
     )
-
 
     nav_and_localization = GroupAction(
         actions=[
@@ -120,6 +141,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_map_arg,
         use_sim_time_arg,
+        real_robot_arg,
         initial_pose_node,
         nav_and_localization,
         nav2_with_slam,
