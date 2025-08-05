@@ -66,15 +66,10 @@ def generate_launch_description():
         else_value=simulated_navigation_params_file
     )
 
-    slam_params_file = os.path.join(
-        pkg_mirte_navigation,
-        'params',
-        'mirte_slam_params.yaml')
-
     # Localization launch
     localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
+            FindPackageShare('nav2_bringup'), 'launch', 'localization_launch.py'
         ])),
         launch_arguments={'map': map_file, 'use_sim_time': use_sim_time}.items()
     )
@@ -82,18 +77,22 @@ def generate_launch_description():
     # Navigation launch
     navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare("nav2_bringup"), "launch", "navigation_launch.py"
+            FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py'
         ])),
         launch_arguments={
-            "map": map_file,
-            "params_file": navigation_params_file,
+            'map': map_file,
+            'params_file': navigation_params_file,
             'use_sim_time': use_sim_time,
         }.items()
     )
 
-    slam_tb_path = get_package_share_directory("slam_toolbox")
-    slam_tb_launch_path = os.path.join(slam_tb_path, "launch", "online_async_launch.py")
-
+    slam_params_file = os.path.join(
+        pkg_mirte_navigation,
+        'params',
+        'mirte_slam_params.yaml'
+    )
+    slam_tb_path = get_package_share_directory('slam_toolbox')
+    slam_tb_launch_path = os.path.join(slam_tb_path, 'launch', 'online_async_launch.py')
     nav2_with_slam = GroupAction(
         actions=[
             navigation_launch,
@@ -105,7 +104,7 @@ def generate_launch_description():
                 }.items()
             ),
         ],
-        condition=LaunchConfigurationEquals("use_map", "False"),
+        condition=LaunchConfigurationEquals('use_map', 'False'),
     )
 
     nav_and_localization = GroupAction(
@@ -113,18 +112,18 @@ def generate_launch_description():
             localization_launch,
             navigation_launch
         ],
-        condition=LaunchConfigurationEquals("use_map", "True"),
+        condition=LaunchConfigurationEquals('use_map', 'True'),
     )
 
     rviz_file = PathJoinSubstitution([
-            FindPackageShare("nav2_bringup"), "rviz", "nav2_default_view.rviz"
+            FindPackageShare('nav2_bringup'), 'rviz', 'nav2_default_view.rviz'
         ])
     start_rviz_cmd = Node(
-        package="rviz2",
-        executable="rviz2",
-        arguments=["-d", rviz_file, "--ros-args", "--log-level", "WARN"],
-        output="screen",
-        parameters=[{"use_sim_time": use_sim_time}],
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', rviz_file, '--ros-args', '--log-level', 'WARN'],
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
     initial_pose_node = TimerAction(
