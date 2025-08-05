@@ -15,11 +15,13 @@ from launch.substitutions import PythonExpression
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.conditions import LaunchConfigurationEquals
+from nav2_common.launch import ReplaceString
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_map = LaunchConfiguration('use_map')
     real_robot = LaunchConfiguration('real_robot')
+    lattice_planner = LaunchConfiguration('lattice_planner')
 
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
@@ -37,6 +39,12 @@ def generate_launch_description():
         'real_robot',
         default_value='True',
         description='Wether the real robot is being used (True/False)',
+    )
+
+    lattice_planner_arg = DeclareLaunchArgument(
+        'lattice_planner',
+        default_value='False',
+        description='Wether the lattice planner is being used (True/False)',
     )
     
     # Get the package share directory
@@ -64,6 +72,22 @@ def generate_launch_description():
         ]),
         if_value=real_navigation_params_file,
         else_value=simulated_navigation_params_file
+    )
+
+    lattice_planner_confg = os.path.join(
+        pkg_mirte_navigation,
+        'params',
+        'lattice_output.json')
+
+    navigation_params_file = IfElseSubstitution(
+        condition=PythonExpression([
+            lattice_planner
+        ]),
+        if_value=ReplaceString(
+            source_file=navigation_params_file,
+            replacements={'<lattice_config_path>': lattice_planner_confg}
+        ),
+        else_value=navigation_params_file
     )
 
     # Localization launch
@@ -141,6 +165,7 @@ def generate_launch_description():
         use_map_arg,
         use_sim_time_arg,
         real_robot_arg,
+        lattice_planner_arg,
         initial_pose_node,
         nav_and_localization,
         nav2_with_slam,
