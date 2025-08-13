@@ -16,6 +16,8 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*launch.py')),
         (os.path.join('share', package_name, 'params'), glob('params/*')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+        (os.path.join('share', package_name, 'trees'), glob('trees/*')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,10 +30,5 @@ setup(
         'console_scripts': [
             'set_initial_pose = mirte_navigation.set_initial_pose: main',
         ],
-        
     },
 )
-
-
-
-
