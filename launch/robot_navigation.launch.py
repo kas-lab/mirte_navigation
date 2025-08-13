@@ -44,6 +44,11 @@ def generate_launch_description():
         'params',
         'mirte_nav2_params.yaml')
 
+    slam_params_file = os.path.join(
+        pkg_mirte_navigation,
+        'params',
+        'mirte_slam_params.yaml')
+
     # Localization launch
     localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
@@ -70,7 +75,13 @@ def generate_launch_description():
     nav2_with_slam = GroupAction(
         actions=[
             navigation_launch,
-            IncludeLaunchDescription(AnyLaunchDescriptionSource(slam_tb_launch_path)),
+            IncludeLaunchDescription(
+                AnyLaunchDescriptionSource(slam_tb_launch_path),
+                launch_arguments = {
+                    'slam_params_file': slam_params_file,
+                    'use_sim_time': use_sim_time,
+                }.items()
+            ),
         ],
         condition=LaunchConfigurationEquals("use_map", "False"),
     )
