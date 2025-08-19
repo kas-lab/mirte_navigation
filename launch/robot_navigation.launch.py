@@ -54,7 +54,7 @@ def generate_launch_description():
     map_file = os.path.join(
         pkg_mirte_navigation,
         'maps',
-        'robocup_map.yaml')
+        'robocup_sim_mirte.yaml')
     
     simulated_navigation_params_file = os.path.join(
         pkg_mirte_navigation,
@@ -155,13 +155,14 @@ def generate_launch_description():
     )
 
     initial_pose_node = TimerAction(
-        period=1.0,  # Delay in seconds before starting the initial pose node
+        period=2.0,  # Delay in seconds before starting the initial pose node
         actions=[
             Node(
                 package='mirte_navigation',
                 executable='set_initial_pose',
                 name='set_initial_pose',
-                output='screen'
+                output='screen',
+                parameters=[{'use_sim_time': use_sim_time}],
             )
         ]
     )
@@ -170,8 +171,8 @@ def generate_launch_description():
         use_sim_time_arg,
         real_robot_arg,
         lattice_planner_arg,
-        initial_pose_node,
         nav_and_localization,
         nav2_with_slam,
-        start_rviz_cmd
+        start_rviz_cmd,
+        initial_pose_node,
     ])
