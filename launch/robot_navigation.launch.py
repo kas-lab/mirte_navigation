@@ -54,7 +54,11 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
         ])),
-        launch_arguments={'map': map_file, 'use_sim_time': use_sim_time}.items()
+        launch_arguments={
+            'map': map_file,
+            'params_file': navigation_params_file,
+            'use_sim_time': use_sim_time,
+        }.items()
     )
 
     # Navigation launch
