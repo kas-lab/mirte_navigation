@@ -166,6 +166,20 @@ def generate_launch_description():
             )
         ]
     )
+
+    relay_topic_cmd = Node(
+        package = "topic_tools",
+        executable = "relay",
+        arguments=["/cmd_vel", "/mirte_base_controller/cmd_vel"],
+        output="screen",
+    )
+    relay_topic_odom = Node(
+        package = "topic_tools",
+        executable = "relay",
+        arguments=["/mirte_base_controller/odom", "/odom"],
+        output="screen",
+    )
+
     return LaunchDescription([
         use_map_arg,
         use_sim_time_arg,
@@ -175,4 +189,6 @@ def generate_launch_description():
         nav2_with_slam,
         start_rviz_cmd,
         initial_pose_node,
+        relay_topic_cmd,
+        relay_topic_odom
     ])
