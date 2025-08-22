@@ -123,7 +123,6 @@ def generate_launch_description():
     slam_tb_launch_path = os.path.join(slam_tb_path, 'launch', 'online_async_launch.py')
     nav2_with_slam = GroupAction(
         actions=[
-            navigation_launch,
             IncludeLaunchDescription(
                 AnyLaunchDescriptionSource(slam_tb_launch_path),
                 launch_arguments = {
@@ -164,7 +163,8 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{'use_sim_time': use_sim_time}],
             )
-        ]
+        ],
+        condition=LaunchConfigurationEquals('use_map', 'True'),
     )
 
     relay_topic_cmd = Node(
