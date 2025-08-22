@@ -150,9 +150,18 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('use_map', 'True'),
     )
 
-    rviz_file = PathJoinSubstitution([
+    rviz_file = IfElseSubstitution(
+        condition=PythonExpression([
+            use_map
+        ]),
+        if_value=PathJoinSubstitution([
             FindPackageShare('nav2_bringup'), 'rviz', 'nav2_default_view.rviz'
+        ]),
+        else_value=PathJoinSubstitution([
+            FindPackageShare('mirte_navigation'), 'rviz', 'rviz_mapping_cmd_vel.rviz'
         ])
+    )
+
     start_rviz_cmd = Node(
         package='rviz2',
         executable='rviz2',
