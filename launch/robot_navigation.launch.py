@@ -20,6 +20,7 @@ from nav2_common.launch import ReplaceString
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_map = LaunchConfiguration('use_map')
+    map_name = LaunchConfiguration('map_name')
     real_robot = LaunchConfiguration('real_robot')
     lattice_planner = LaunchConfiguration('lattice_planner')
 
@@ -33,6 +34,12 @@ def generate_launch_description():
         'use_map',
         default_value='True',
         description='Run using a premade map, no SLAM (True/False)',
+    )
+
+    map_name_arg = DeclareLaunchArgument(
+        'map_name',
+        default_value='robocup_sim_mirte.yaml',
+        description='Name of the map to load. Checking only maps in mirte_navigation/maps.',
     )
 
     real_robot_arg = DeclareLaunchArgument(
@@ -51,10 +58,11 @@ def generate_launch_description():
     pkg_mirte_navigation = get_package_share_directory('mirte_navigation')
 
     # Define relative paths for the map and params file
-    map_file = os.path.join(
-        pkg_mirte_navigation,
+    map_file = PathJoinSubstitution([
+        FindPackageShare('mirte_navigation'),
         'maps',
-        'robocup_sim_mirte.yaml')
+        LaunchConfiguration('map_name'),
+    ])
     
     simulated_navigation_params_file = os.path.join(
         pkg_mirte_navigation,
@@ -182,6 +190,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         use_map_arg,
+        map_name_arg,
         use_sim_time_arg,
         real_robot_arg,
         lattice_planner_arg,
