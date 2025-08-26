@@ -299,7 +299,7 @@ global_costmap:
         enabled: True
         observation_sources: "depth_camera"
         depth_camera:
-          topic: /camera/depth/points
+          topic: /camera/depth/points/uncompressed
           max_obstacle_height: 0.65 # robot's height with arm up
           obstacle_max_range: 6.0 # this value needs to be checked in the camera datasheet
           obstacle_min_range: 0.2 # this value needs to be checked in the camera datasheet
@@ -332,7 +332,13 @@ local_costmap:
       always_send_full_costmap: True
       footprint: "[ [-0.2275, -0.155], [0.1525, -0.155], [0.1525, 0.155], [-0.2275, 0.155] ]"
       footprint_padding: 0.03
-      plugins: ["obstacle_layer", "obstacle_layer_depth", "inflation_layer"]
+      plugins: [
+        "obstacle_layer", 
+        "obstacle_layer_depth",
+        "sonar",
+        "denoise_layer",
+        "inflation_layer"
+      ]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -350,7 +356,7 @@ local_costmap:
         enabled: True
         observation_sources: "depth_camera"
         depth_camera:
-          topic: /camera/depth/points
+          topic: /camera/depth/points/uncompressed
           max_obstacle_height: 0.65 # robot's height with arm up
           obstacle_max_range: 6.0 # this value needs to be checked in the camera datasheet
           obstacle_min_range: 0.2 # this value needs to be checked in the camera datasheet

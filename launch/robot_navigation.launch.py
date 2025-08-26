@@ -185,16 +185,23 @@ def generate_launch_description():
     )
 
     relay_topic_cmd = Node(
-        package = "topic_tools",
-        executable = "relay",
-        arguments=["/cmd_vel", "/mirte_base_controller/cmd_vel"],
-        output="screen",
+        package = 'topic_tools',
+        executable = 'relay',
+        arguments=['/cmd_vel', '/mirte_base_controller/cmd_vel'],
+        output='screen',
     )
-    relay_topic_odom = Node(
-        package = "topic_tools",
-        executable = "relay",
-        arguments=["/mirte_base_controller/odom", "/odom"],
-        output="screen",
+
+    point_cloud_republisher = Node(
+        package='point_cloud_transport',
+        executable='republish',
+        parameters=[{
+            'in_transport': 'zstd',
+            'out_transport': 'raw',
+        }],
+        remappings=[
+            ('in/zstd', '/camera/depth/points/zstd'),
+            ('out', '/camera/depth/points/uncompressed'),
+        ]
     )
 
     return LaunchDescription([
@@ -208,5 +215,5 @@ def generate_launch_description():
         start_rviz_cmd,
         initial_pose_node,
         relay_topic_cmd,
-        relay_topic_odom
+        point_cloud_republisher
     ])
