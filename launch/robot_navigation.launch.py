@@ -155,7 +155,7 @@ def generate_launch_description():
             use_map
         ]),
         if_value=PathJoinSubstitution([
-            FindPackageShare('nav2_bringup'), 'rviz', 'nav2_default_view.rviz'
+            FindPackageShare('mirte_navigation'), 'rviz', 'rviz_nav2.rviz'
         ]),
         else_value=PathJoinSubstitution([
             FindPackageShare('mirte_navigation'), 'rviz', 'rviz_mapping_cmd_vel.rviz'
