@@ -366,9 +366,20 @@ local_costmap:
           observation_persistence: 5.0
           data_type: "PointCloud2"
           # transport_type: "zstd" # not available in humble
+      sonar:
+        plugin: "nav2_costmap_2d::RangeSensorLayer"
+        enabled: True
+        topics: ["/io/distance/front_left", "/io/distance/front_right", "/io/distance/rear_left"] # rear_right is not working on my mirte
+        phi: 1.2
+        inflate_cone: 1.0
+        no_readings_timeout: 0.0
+        clear_threshold: 0.2
+        mark_threshold: 0.8
+        clear_on_max_reading: False
+        input_sensor_type: "VARIABLE"
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
-        enabled: true
+        enabled: True
         minimal_group_size: 2
         group_connectivity_type: 8
       inflation_layer:
