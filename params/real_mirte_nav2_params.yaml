@@ -1,36 +1,37 @@
 amcl:
   ros__parameters:
     robot_model_type: "nav2_amcl::OmniMotionModel"
-    
+
+    scan_topic: "/scan_filtered"
     base_frame_id: "base_link"
     global_frame_id: "map"
     odom_frame_id: "odom"
     scan_topic: scan
     tf_broadcast: true
     transform_tolerance: 1.0
-    
-    alpha1: 0.30 # how rotation affects the robot’s rotation estimate. Increasing this value increases uncertainty in the rotation estimation
+
+    alpha1: 0.35 # how rotation affects the robot’s rotation estimate. Increasing this value increases uncertainty in the rotation estimation
     alpha2: 0.20 # how forward motion affects rotation estimates
     alpha3: 0.22 # how forward motion affects position estimates
     alpha4: 0.30 # how rotation affects position estimates
-    alpha5: 0.35 # how omnidirectional movement affects position estimates
-    
+    alpha5: 0.38 # how omnidirectional movement affects position estimates
+
     # Skip obviously bad beams (dynamic occlusions) during motion
     do_beamskip: true
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
-    
+
     lambda_short: 0.1
     laser_max_range: 12.0
     laser_min_range: 0.30
     laser_model_type: "likelihood_field"
     laser_likelihood_max_dist: 3.0 # default 2.0
-    
+
     max_beams: 90
     max_particles: 4000
     min_particles: 1000
-    
+
     pf_err: 0.05
     pf_z: 0.99
     recovery_alpha_fast: 0.0
@@ -38,10 +39,10 @@ amcl:
     resample_interval: 1
     save_pose_rate: 0.5
     sigma_hit: 0.2
-    
+
     update_min_a: 0.05  # default 0.2
     update_min_d: 0.03  # default 0.25
-    
+
     z_hit: 0.75 # Increase this value to trust more perfect matches with map (default 0.5)
     z_max: 0.05
     z_rand: 0.25 # decrease this value to assume sensor readings should match more with map (default 0.5)
@@ -75,7 +76,7 @@ behavior_server:
     local_frame: odom
     global_frame: map
     robot_base_frame: base_link
-    transform_tolerance: 0.1
+    transform_tolerance: 0.35
     simulate_ahead_time: 2.0
     max_rotational_vel: 2.0
     min_rotational_vel: 1.17
@@ -89,6 +90,7 @@ bt_navigator:
     odom_topic: /mirte_base_controller/odom
     bt_loop_duration: 10
     default_server_timeout: 20
+    transform_tolerance: 0.35
     #default_nav_to_pose_bt_xml: "<tree_path>"
     wait_for_service_timeout: 1000
     action_server_result_timeout: 900.0
@@ -130,7 +132,7 @@ planner_server:
       change_penalty: 0.05                # Penalty to apply if motion is changing directions (L to R), must be >= 0
       non_straight_penalty: 1.05          # Penalty to apply if motion is non-straight, must be => 1
       cost_penalty: 2.0                   # Penalty to apply to higher cost areas when adding into the obstacle map dynamic programming distance expansion heuristic. This drives the robot more towards the center of passages. A value between 1.3 - 3.5 is reasonable.
-      rotation_penalty: 5.0               # Penalty to apply to in-place rotations, if minimum control set contains them
+      rotation_penalty: 4.0               # Penalty to apply to in-place rotations, if minimum control set contains them
       retrospective_penalty: 0.015
       lattice_filepath: "<lattice_config_path>"  # The filepath to the state lattice graph
       lookup_table_size: 20.0             # Size of the dubin/reeds-sheep distance window to cache, in meters.
@@ -212,17 +214,17 @@ controller_server:
       CostCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 3.81 # default 3.81
+        cost_weight: 4.1 # default 3.81
         critical_cost: 300.0
         consider_footprint: true
         collision_cost: 1000000.0
-        near_goal_distance: 0.25 # default 0.5
+        near_goal_distance: 0.6 # default 0.5
         trajectory_point_step: 2
       GoalAngleCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 2.0
-        threshold_to_consider: 0.25
+        cost_weight: 2.5
+        threshold_to_consider: 0.5
       GoalCritic:
         enabled: true
         cost_power: 1
@@ -231,31 +233,31 @@ controller_server:
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
+        cost_weight: 4.5
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
-        threshold_to_consider: 0.8
+        threshold_to_consider: 0.9
         offset_from_furthest: 4
         use_path_orientations: true
       PathAngleCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 2.0
+        cost_weight: 1.8
         offset_from_furthest: 6
-        threshold_to_consider: 0.8
+        threshold_to_consider: 0.9
         max_angle_to_furthest: 0.8
         mode: 0
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 16.0
+        cost_weight: 15.0
         offset_from_furthest: 4
-        threshold_to_consider: 0.8
+        threshold_to_consider: 0.9
       PreferForwardCritic:
         enabled: true
         cost_power: 1
         cost_weight: 10.0
-        threshold_to_consider: 0.8
+        threshold_to_consider: 0.85
       VelocityDeadbandCritic:
         enabled: true
         cost_power: 1
@@ -280,20 +282,21 @@ global_costmap:
       resolution: 0.05
       track_unknown_space: true
       always_send_full_costmap: True
-      plugins: ["static_layer", "obstacle_layer", "obstacle_layer_depth", "inflation_layer"]
+      plugins: ["static_layer", "obstacle_layer", "obstacle_layer_depth", "sonar", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
         scan:
+          topic: /scan_filtered
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 12.0
-          raytrace_min_range: 0.3
+          raytrace_min_range: 0.2
           obstacle_max_range: 12.0
-          obstacle_min_range: 0.3
+          obstacle_min_range: 0.2
       obstacle_layer_depth:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -307,14 +310,25 @@ global_costmap:
           marking: True
           data_type: "PointCloud2"
           # transport_type: "zstd" # not available in humble
+      sonar:
+        plugin: "nav2_costmap_2d::RangeSensorLayer"
+        enabled: True
+        topics: ["/io/distance/front_left", "/io/distance/front_right", "/io/distance/rear_left"] # rear_right is not working on my mirte
+        phi: 1.2
+        inflate_cone: 1.0
+        no_readings_timeout: 0.0
+        clear_threshold: 0.2
+        mark_threshold: 0.8
+        clear_on_max_reading: False
+        input_sensor_type: "VARIABLE"
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 1.8
-        inflation_radius: 0.9
-      
+        cost_scaling_factor: 3.1
+        inflation_radius: 1.8
+
 
 local_costmap:
   local_costmap:
@@ -322,7 +336,7 @@ local_costmap:
       update_frequency: 10.0
       publish_frequency: 10.0 # 5hz for both
       transform_tolerance: 0.3
-      global_frame: odom 
+      global_frame: odom
       robot_base_frame: base_link
       use_sim_time: False
       rolling_window: true
@@ -333,10 +347,10 @@ local_costmap:
       footprint: "[ [-0.2275, -0.155], [0.1525, -0.155], [0.1525, 0.155], [-0.2275, 0.155] ]"
       footprint_padding: 0.03
       plugins: [
-        "obstacle_layer", 
+        "obstacle_layer",
         "obstacle_layer_depth",
         "sonar",
-        "denoise_layer",
+        # "denoise_layer",
         "inflation_layer"
       ]
       obstacle_layer:
@@ -344,10 +358,10 @@ local_costmap:
         enabled: True
         observation_sources: "scan"
         scan:
-          topic: /scan
+          topic: /scan_filtered
           max_obstacle_height: 0.65 # robot's height with arm up
           obstacle_max_range: 12.0
-          obstacle_min_range: 0.3
+          obstacle_min_range: 0.2
           clearing: True
           marking: True
           data_type: "LaserScan"
@@ -358,9 +372,9 @@ local_costmap:
         depth_camera:
           topic: /camera/depth/points/uncompressed
           max_obstacle_height: 0.65 # robot's height with arm up
-          obstacle_max_range: 6.0 # this value needs to be checked in the camera datasheet
+          obstacle_max_range: 5.0 # this value needs to be checked in the camera datasheet
           obstacle_min_range: 0.2 # this value needs to be checked in the camera datasheet
-          raytrace_max_range: 5.0 
+          raytrace_max_range: 5.0
           marking: True
           clearing: True
           observation_persistence: 5.0
@@ -384,8 +398,8 @@ local_costmap:
         group_connectivity_type: 8
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.7
-        inflation_radius: 0.6
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.0
 
 velocity_smoother:
   ros__parameters:
@@ -395,7 +409,7 @@ velocity_smoother:
     feedback: "OPEN_LOOP"
     max_velocity: [1.0, 1.0, 2.0]
     min_velocity: [-1.0, -1.0, -2.0]
-    max_accel: [3.0, 3.0, 3.5] 
+    max_accel: [3.0, 3.0, 3.5]
     max_decel: [-2.5, -2.0, -3.2]
     odom_topic: "/mirte_base_controller/odom"
     odom_duration: 0.1

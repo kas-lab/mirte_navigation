@@ -1,5 +1,6 @@
 amcl:
   ros__parameters:
+    scan_topic: "/scan_filtered"
     robot_model_type: "nav2_amcl::OmniMotionModel"
     alpha1: 0.05 # how rotation affects the robot’s rotation estimate. Increasing this value increases uncertainty in the rotation estimation
     alpha2: 0.05 # how forward motion affects rotation estimates
@@ -235,6 +236,7 @@ global_costmap:
         enabled: True
         observation_sources: scan
         scan:
+          topic: /scan_filtered
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -250,14 +252,14 @@ global_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 0.5
         inflation_radius: 1.0
-      
+
 
 local_costmap:
   local_costmap:
     ros__parameters:
       update_frequency: 5.0
       publish_frequency: 2.0 # 5hz for both
-      global_frame: odom 
+      global_frame: odom
       robot_base_frame: base_link
       use_sim_time: False
       rolling_window: true
@@ -278,14 +280,14 @@ local_costmap:
         enabled: True
         observation_sources: scan
         scan:
-          topic: /scan # different, has a slash
+          topic: /scan_filtered # different, has a slash
           max_obstacle_height: 2.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.2
           clearing: True
           marking: True
           data_type: "LaserScan"
-      # voxel_layer: 
+      # voxel_layer:
       #   plugin: "nav2_costmap_2d::VoxelLayer"
       #   enabled: True
       #   publish_voxel_map: True
