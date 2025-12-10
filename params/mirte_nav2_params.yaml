@@ -1,44 +1,51 @@
 amcl:
   ros__parameters:
-    alpha1: 0.2
-    alpha2: 0.2
-    alpha3: 0.2
-    alpha4: 0.2
-    alpha5: 0.2
-    base_frame_id: "base_footprint"
-    beam_skip_distance: 0.5
-    beam_skip_error_threshold: 0.9
-    beam_skip_threshold: 0.3
-    do_beamskip: false
-    global_frame_id: "map"
-    lambda_short: 0.1
-    laser_likelihood_max_dist: 2.0
-    laser_max_range: 100.0
-    laser_min_range: -1.0
-    laser_model_type: "likelihood_field"
-    max_beams: 60
-    max_particles: 2000
-    min_particles: 500
-    odom_frame_id: "odom"
-    pf_err: 0.05
-    pf_z: 0.99
-    recovery_alpha_fast: 0.0
-    recovery_alpha_slow: 0.0
-    resample_interval: 1
-    # robot_model_type: "nav2_amcl::DifferentialMotionModel"
-    robot_model_type: "nav2_amcl::OmniMotionModel"
-
-    save_pose_rate: 0.5
-    sigma_hit: 0.2
-    tf_broadcast: true
-    transform_tolerance: 1.0
-    update_min_a: 0.2
-    update_min_d: 0.25
-    z_hit: 0.5
-    z_max: 0.05
-    z_rand: 0.5
-    z_short: 0.05
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: odom
+    global_frame_id: map
     scan_topic: scan
+    tf_broadcast: true
+    transform_tolerance: 0.2            # increase if you see occasional TF extrapolation
+
+    # --- Motion model (OMNI!) ---
+    odom_model_type: "nav2_amcl::OmniMotionModel"             # "diff" is wrong for omni bases
+    # Odometry noise (tuned for typical Mecanum/3-omni wheels)
+    alpha1: 0.01     # rot -> rot noise
+    alpha2: 0.02     # trans -> rot noise
+    alpha3: 0.02     # trans -> trans noise
+    alpha4: 0.01     # rot -> trans noise
+    alpha5: 0.02     # strafe -> trans/rot coupling (only used in omni)
+
+    # --- Filter size / KLD sampling ---
+    min_particles: 500
+    max_particles: 3000
+    update_min_d: 0.05                  # update more often (omni has small micro-motions)
+    update_min_a: 0.03
+
+    resample_interval: 1
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
+
+    # --- Laser model (likelihood field) ---
+    laser_model_type: "likelihood_field"       # robust & fast
+    laser_z_hit: 0.95
+    laser_z_rand: 0.05
+    laser_sigma_hit: 0.15                      # meters; tighten if map/laser are clean
+    laser_lambda_short: 0.1                    # unused with likelihood_field
+    laser_likelihood_max_dist: 2.0             # reduce if environment is cluttered
+
+    # Ray casting load (balance accuracy & CPU)
+    max_beams: 60                              # raise to 80–100 for very detailed maps
+
+    # Beamskip helps with dynamic obstacles or glass/metal
+    do_beamskip: true
+    beam_skip_distance: 0.5
+    beam_skip_threshold: 0.3
+    beam_skip_error_threshold: 0.9
+
+    # Initial pose (override at runtime if you set it from RViz)
+    always_reset_initial_pose: false
 
 bt_navigator:
   ros__parameters:
@@ -69,36 +76,12 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 20.0
-    costmap_update_timeout: 0.30
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.001
-    min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
-    progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"]
-    controller_plugins: ["FollowPath"]
-    use_realtime_priority: false
-
-    # Progress checker parameters
-    progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.1
-      movement_time_allowance: 10.0
-    general_goal_checker:
-      stateful: True
-      plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.1
-      yaw_goal_tolerance: 6.2
+    controller_frequency: 30.0
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
       model_dt: 0.05
       batch_size: 2000
-      ax_max: 3.0
-      ax_min: -3.0
-      ay_max: 3.0
-      az_max: 3.5
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
@@ -106,23 +89,30 @@ controller_server:
       vx_min: -0.35
       vy_max: 0.5
       wz_max: 1.9
+      ax_max: 3.0
+      ax_min: -3.0
+      ay_min: -3.0
+      ay_max: 3.0
+      az_max: 3.5
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
       temperature: 0.3
       gamma: 0.015
       motion_model: "Omni"
-      visualize: true
-      regenerate_noises: true
+      visualize: false
+      reset_period: 1.0 # (only in Humble)
+      regenerate_noises: false
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
+      TrajectoryValidator:
+        plugin: "mppi::DefaultOptimalTrajectoryValidator"
+        collision_lookahead_time: 2.0
+        consider_footprint: true
       AckermannConstraints:
         min_turning_r: 0.2
-      critics: [
-        "ConstraintCritic", "CostCritic", "GoalCritic",
-        "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
-        "PathAngleCritic", "PreferForwardCritic"]
+      critics: ["ObstaclesCritic","ConstraintCritic", "CostCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic", "PathAngleCritic", "PreferForwardCritic"]
       ConstraintCritic:
         enabled: true
         cost_power: 1
@@ -142,6 +132,17 @@ controller_server:
         cost_power: 1
         cost_weight: 5.0
         threshold_to_consider: 0.5
+      ObstaclesCritic:
+        enabled: true
+        cost_power: 1
+        repulsion_weight: 1.5
+        critical_weight: 20.0
+        consider_footprint: true
+        collision_cost: 10000.0
+        collision_margin_distance: 0.1
+        near_goal_distance: 0.5
+        inflation_radius: 0.55 # (only in Humble)
+        cost_scaling_factor: 10.0 # (only in Humble)
       CostCritic:
         enabled: true
         cost_power: 1
@@ -174,6 +175,11 @@ controller_server:
         threshold_to_consider: 0.5
         max_angle_to_furthest: 1.0
         mode: 0
+      # VelocityDeadbandCritic:
+      #   enabled: true
+      #   cost_power: 1
+      #   cost_weight: 35.0
+      #   deadband_velocities: [0.05, 0.05, 0.05]
       # TwirlingCritic:
       #   enabled: true
       #   twirling_cost_power: 1
@@ -190,28 +196,23 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.22
-      plugins: ["voxel_layer", "inflation_layer"]
+      robot_radius: 0.36
+      # footprint: "[[0.36,0.15] , [0.36,-0.15] , [-0.15,-0.15] , [-0.15 , 0.15]]"
+      plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.5
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
+        cost_scaling_factor: 30.0
+        inflation_radius: 0.2
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
         observation_sources: scan
         scan:
-          # A relative topic will be appended to the parent of the local_costmap namespace.
+          # A relative topic will be appended to the parent of the global_costmap namespace.
           # For example:
           #   * User chosen namespace is `tb4`.
           #   * User chosen topic is `scan`.
-          #   * Topic will be remapped to `/tb4/scan` without `local_costmap`.
+          #   * Topic will be remapped to `/tb4/scan` without `global_costmap`.
           #   * Use global topic `/scan` if you do not wish the node namespace to apply
           topic: scan
           max_obstacle_height: 2.0
@@ -234,7 +235,8 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.22
+      robot_radius: 0.36 # 0.22
+      # footprint: "[[0.36,0.15] , [0.36,-0.15] , [-0.15,-0.15] , [-0.15 , 0.15]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -263,8 +265,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.5
+        cost_scaling_factor: 30.0
+        inflation_radius: 0.2
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -291,6 +293,8 @@ planner_server:
       tolerance: 0.5
       use_astar: false
       allow_unknown: true
+
+
 
 smoother_server:
   ros__parameters:
@@ -331,7 +335,7 @@ behavior_server:
     transform_tolerance: 0.1
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
-    min_rotational_vel: 0.4
+    min_rotational_vel: 0.8
     rotational_acc_lim: 3.2
 
 waypoint_follower:
@@ -450,3 +454,15 @@ loopback_simulator:
     map_frame_id: "map"
     scan_frame_id: "base_scan"  # tb4_loopback_simulator.launch.py remaps to 'rplidar_link'
     update_duration: 0.02
+
+lifecycle_manager:
+  ros__parameters:
+    bond_timeout: 20.0
+    autostart: true      
+    node_names:
+      - map_server
+      - planner_server
+      - controller_server
+      - recoveries_server
+      - bt_navigator
+

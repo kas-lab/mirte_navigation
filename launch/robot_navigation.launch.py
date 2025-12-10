@@ -4,10 +4,11 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch_ros.actions import Node
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, ExecuteProcess, TimerAction
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, TimerAction, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare  
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     # Get the package share directory
@@ -17,13 +18,18 @@ def generate_launch_description():
     map_file = os.path.join(
         pkg_mirte_navigation,
         'maps',
-        'map.yaml')
+        'arena_map.yaml')
     
-    params_file = os.path.join(
+    default_params_file = os.path.join(
         pkg_mirte_navigation,
         'params',
         'mirte_nav2_params.yaml')
-
+    
+    declare_param_arg = DeclareLaunchArgument(
+        'params', default_value=default_params_file,
+        description='Nav2 param file'
+    )
+    params_file = LaunchConfiguration('params')
     # Localization launch
     localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
@@ -35,11 +41,11 @@ def generate_launch_description():
     # Navigation launch
     navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare("nav2_bringup"), "launch", "navigation_launch.py"
+            FindPackageShare("mirte_navigation"), "launch", "navigation.launch.py"
         ])),
         launch_arguments={
             "map": map_file,
-            "params_file": params_file
+            "params_file": params_file,
         }.items()
     )
 
@@ -48,7 +54,8 @@ def generate_launch_description():
         cmd=["rviz2", "-d", PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "rviz", "nav2_default_view.rviz"
         ])],
-        output="screen"
+        output="screen",
+        prefix='gnome-terminal --'
     )
     relay_topic_cmd = Node(
         package = "topic_tools",
@@ -76,9 +83,15 @@ def generate_launch_description():
         arguments=["0", "0", "0", "0", "0", "0",  "base_link", "base_footprint"],
         output="screen",
     ),
+    Node(
+        package = "tf2_ros",
+        executable = "static_transform_publisher",
+        arguments=['0', '0', '0', '0', '0', '0', '1', 'map', 'odom'],
+        output="screen",
+    ),
     ])
     initial_pose_node = TimerAction(
-        period=1.0,  # Delay in seconds before starting the initial pose node
+        period=20.0,  # Delay in seconds before starting the initial pose node
         actions=[
             Node(
                 package='mirte_navigation',
@@ -91,9 +104,10 @@ def generate_launch_description():
     return LaunchDescription([
         localization_launch,
         initial_pose_node,
-        navigation_launch,
-        rviz_command,
         relay_topic_cmd,
         relay_topic_odom,
+        navigation_launch,
+        rviz_command,
+
         tf_base_frame,
     ])
