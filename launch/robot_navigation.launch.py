@@ -29,7 +29,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
         ])),
-        launch_arguments={'map': map_file}.items()
+        launch_arguments={'map': map_file, 'use_sim_time': 'true'}.items()
     )
 
     # Navigation launch
@@ -39,16 +39,20 @@ def generate_launch_description():
         ])),
         launch_arguments={
             "map": map_file,
-            "params_file": params_file
+            "params_file": params_file,
+            "use_sim_time": 'true',
         }.items()
     )
 
     # RViz execution
-    rviz_command = ExecuteProcess(
-        cmd=["rviz2", "-d", PathJoinSubstitution([
+    start_rviz_cmd = Node(
+        package="rviz2",
+        executable="rviz2",
+        arguments=["-d", PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "rviz", "nav2_default_view.rviz"
-        ])],
-        output="screen"
+        ]), "--ros-args", "--log-level", "WARN"],
+        output="screen",
+        parameters=[{"use_sim_time": True}],
     )
 
     initial_pose_node = TimerAction(
@@ -58,7 +62,8 @@ def generate_launch_description():
                 package='mirte_navigation',
                 executable='set_initial_pose',
                 name='set_initial_pose',
-                output='screen'
+                output='screen',
+                parameters=[{"use_sim_time": True}],
             )
         ]
     )
@@ -66,5 +71,5 @@ def generate_launch_description():
         localization_launch,
         initial_pose_node,
         navigation_launch,
-        rviz_command
+        start_rviz_cmd
     ])
