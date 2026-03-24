@@ -29,7 +29,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare("nav2_bringup"), "launch", "localization_launch.py"
         ])),
-        launch_arguments={'map': map_file, 'use_sim_time': 'true'}.items()
+        launch_arguments={'map': map_file, "params_file": params_file}.items()
     )
 
     # Navigation launch
@@ -69,7 +69,6 @@ def generate_launch_description():
     )
     return LaunchDescription([
         localization_launch,
-        initial_pose_node,
         navigation_launch,
         start_rviz_cmd
     ])
